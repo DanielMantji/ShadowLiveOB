@@ -1,0 +1,35 @@
+﻿@model List<ShadowLiveOB.Models.ObLog>
+@{
+    ViewData["Title"] = "Live OB";
+}
+
+<h2 style="color:green">🟢 SHADOW LIVE OB - LIVE DASHBOARD</h2>
+<p>Radio & NFC Checkpoints appear instantly</p>
+
+<div id="liveLogs" style="border:2px solid black; padding:15px; background:#111; color:lime; height:400px; overflow-y:scroll;">
+    @foreach (var log in Model)
+    {
+        <div>@log.Timestamp.ToString("HH:mm:ss") - [@log.CheckpointType] @log.GuardName: @log.Message</div>
+    }
+</div>
+
+<hr />
+<h4>Test Radio / NFC Post (Simulate Guard):</h4>
+<input id="guardName" placeholder="Guard Name" value="Guard 1" />
+<input id="message" placeholder="Message" value="All clear at main gate" />
+<select id="type"><option>Radio</option><option>NFC</option></select>
+<button onclick="sendLog()">Send Live Log</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/obHub").build();
+    connection.on("ReceiveLog", function (guardName, message, time) {
+        var div = document.getElementById("liveLogs");
+        div.innerHTML = "<div>" + time + " - " + guardName + ": " + message + "</div>" + div.innerHTML;
+    });
+    connection.start();
+
+    function sendLog() {
+        fetch('/Ob/PostLog?guardName=' + document.getElementById('guardName').value + '&message=' + document.getElementById('message').value + '&checkpointType=' + document.getElementById('type').value, { method: 'POST' });
+    }
+</script>
